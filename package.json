@@ -1,0 +1,29 @@
+{
+  "name": "product-universe",
+  "version": "1.0.0",
+  "description": "ProductUniverse - AI-Friendly Multi-Platform Full-Stack Framework",
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/product-universe"
+  },
+  "keywords": [
+    "framework",
+    "full-stack",
+    "ecommerce",
+    "streaming",
+    "saas",
+    "ai-friendly",
+    "template",
+    "starter-kit",
+    "react",
+    "express",
+    "prisma"
+  ],
+  "scripts": {
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
+    "build": "cd client && npm run build"
+  }
+}

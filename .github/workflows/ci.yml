@@ -1,0 +1,102 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Backend Tests
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: server/package-lock.json
+      
+      - name: Install backend dependencies
+        working-directory: ./server
+        run: npm ci
+      
+      - name: Generate Prisma Client
+        working-directory: ./server
+        run: npx prisma generate
+      
+      - name: Run backend linter
+        working-directory: ./server
+        run: npm run lint --if-present
+      
+      - name: Run backend tests
+        working-directory: ./server
+        run: npm test --if-present
+        env:
+          DATABASE_URL: file:./prisma/test.db
+          SESSION_SECRET: test-secret-key
+          NODE_ENV: test
+
+  # Frontend Tests
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+      
+      - name: Install frontend dependencies
+        working-directory: ./client
+        run: npm ci
+      
+      - name: Run frontend linter
+        working-directory: ./client
+        run: npm run lint --if-present
+      
+      - name: Build frontend
+        working-directory: ./client
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:3001/api
+      
+      - name: Run frontend tests
+        working-directory: ./client
+        run: npm test --if-present
+
+  # Security Audit
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Audit backend dependencies
+        working-directory: ./server
+        run: npm audit --audit-level=moderate
+        continue-on-error: true
+      
+      - name: Audit frontend dependencies
+        working-directory: ./client
+        run: npm audit --audit-level=moderate
+        continue-on-error: true

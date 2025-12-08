@@ -1,0 +1,50 @@
+# Auto-label PRs based on changed files
+
+# Backend labels
+backend:
+  - server/**/*
+  - server/*
+
+# Frontend labels
+frontend:
+  - client/**/*
+  - client/*
+
+# Database labels
+database:
+  - server/prisma/**/*
+  - '**/schema.prisma'
+
+# Documentation labels
+documentation:
+  - '**/*.md'
+  - docs/**/*
+
+# Configuration labels
+configuration:
+  - '**/*.json'
+  - '**/*.yml'
+  - '**/*.yaml'
+  - '**/.*rc'
+  - '**/.*.config.*'
+
+# GitHub Actions
+github-actions:
+  - .github/workflows/**/*
+
+# Dependencies
+dependencies:
+  - '**/package.json'
+  - '**/package-lock.json'
+
+# Styling
+styling:
+  - '**/*.css'
+  - '**/tailwind.config.*'
+  - '**/postcss.config.*'
+
+# Tests
+tests:
+  - '**/*.test.*'
+  - '**/*.spec.*'
+  - '**/__tests__/**/*'
