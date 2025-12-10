@@ -11,16 +11,8 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/(.*)",
       "dest": "server/src/app.js"
-    },
-    {
-      "src": "/health",
-      "dest": "server/src/app.js"
-    },
-    {
-      "src": "/(?!api|health).*",
-      "dest": "/index.html"
     }
   ],
   "env": {

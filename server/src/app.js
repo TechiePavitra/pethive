@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const cookieSession = require('cookie-session');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -14,13 +15,17 @@ const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 // Middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? process.env.CLIENT_URL 
+    ? (process.env.CLIENT_URL || 'https://pethive-psi.vercel.app')
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files from client dist folder
+const distPath = path.join(__dirname, '../../client/dist');
+app.use(express.static(distPath));
 
 app.use(cookieSession({
   name: 'session',
@@ -80,15 +85,23 @@ app.use('/api/admin', adminRoutes);
 const chatRoutes = require('./routes/chat');
 app.use('/api', chatRoutes);
 
+// Serve React app for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
 // 404 handler
 app.use(notFoundHandler);
 
 // Error handler (must be last)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 PetHive API server running on port ${PORT}`);
-  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Only listen in development mode (not on Vercel)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 PetHive API server running on port ${PORT}`);
+    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 module.exports = app;
