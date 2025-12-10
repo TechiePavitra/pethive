@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd client && npm install && npm run build",
+  "buildCommand": "npm install && cd client && npm install && npm run build && cd ../server && npm install",
   "outputDirectory": "client/dist",
   "installCommand": "npm install && cd client && npm install && cd ../server && npm install",
   "builds": [
@@ -10,6 +10,17 @@
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "server/src/app.js"
+    },
+    {
+      "src": "/health",
+      "dest": "server/src/app.js"
+    },
+    {
+      "handle": "filesystem"
+    },
     {
       "src": "/(.*)",
       "dest": "server/src/app.js"
