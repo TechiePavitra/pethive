@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm install && cd client && npm install && npm run build && cd ../server && npm install",
+  "buildCommand": "npm install && cd client && npm install && npm run build && cd ../server && npm install && npx prisma generate",
   "outputDirectory": "client/dist",
   "installCommand": "npm install && cd client && npm install && cd ../server && npm install",
   "builds": [
