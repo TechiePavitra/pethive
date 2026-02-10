@@ -1,9 +1,11 @@
 
+console.log('🔧 Starting server initialization...');
 const express = require('express');
 const cors = require('cors');
 const cookieSession = require('cookie-session');
 require('dotenv').config();
 
+console.log('📝 DATABASE_URL:', process.env.DATABASE_URL);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -47,6 +49,11 @@ app.use((req, res, next) => {
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'PetHive API' });
+});
+
+// Test API endpoint
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API is working', timestamp: new Date() });
 });
 
 // API Routes

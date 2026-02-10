@@ -1,0 +1,14 @@
+# PetHive - Frameworks & Technologies
+
+| Feature | Technology |
+|---------|-----------|
+| Real-time UI updates | React + Framer Motion |
+| Routing & Navigation | React Router DOM |
+| Styling | Tailwind CSS |
+| API Communication | Axios |
+| Backend API | Express + CORS |
+| Data Persistence | Prisma + SQLite/PostgreSQL |
+| Authentication | Google Auth + BCryptjs |
+| Session Management | Cookie Session |
+| Development | Vite + Nodemon |
+| Documentation/Markdown | React Markdown + Remark GFM |

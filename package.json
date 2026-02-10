@@ -1,7 +1,7 @@
 {
-  "name": "product-universe",
-  "version": "1.0.0",
-  "description": "ProductUniverse - AI-Friendly Multi-Platform Full-Stack Framework",
+  "name": "pethive",
+  "version": "1.0.1",
+  "description": "PetHive is a full-stack ecommerce petshop and management tool.",
   "author": "Your Name",
   "license": "MIT",
   "repository": {
