@@ -5,6 +5,11 @@ const cors = require('cors');
 const cookieSession = require('cookie-session');
 require('dotenv').config();
 
+// Set a default DATABASE_URL if not provided
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL || 'file:./dev.db';
+}
+
 console.log('📝 DATABASE_URL:', process.env.DATABASE_URL);
 const app = express();
 const PORT = process.env.PORT || 3001;
