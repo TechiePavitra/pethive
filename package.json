@@ -25,6 +25,6 @@
     "install-all": "npm install && cd server && npm install && cd ../client && npm install",
     "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
     "build": "cd server && npm install && npx prisma generate && cd ../client && npm run build",
-    "vercel-build": "cd server && npm install && npx prisma generate && node prisma/seed.js && cd ../client && npm run build"
+    "vercel-build": "cd server && npm install && npx prisma generate && cd ../client && npm run build"
   }
 }

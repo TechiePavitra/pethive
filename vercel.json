@@ -5,6 +5,10 @@
   "installCommand": "npm install && cd server && npm install && cd ../client && npm install",
   "builds": [
     {
+      "src": "client/dist/**",
+      "use": "@vercel/static"
+    },
+    {
       "src": "server/src/app.js",
       "use": "@vercel/node"
     }
@@ -19,7 +23,12 @@
       "dest": "server/src/app.js"
     },
     {
-      "handle": "filesystem"
+      "src": "/assets/(.*)",
+      "dest": "client/dist/assets/$1"
+    },
+    {
+      "src": "/(.*\\..*)",
+      "dest": "client/dist/$1"
     },
     {
       "src": "/(.*)",
