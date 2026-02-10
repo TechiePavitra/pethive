@@ -92,6 +92,28 @@ app.use('/api/admin', adminRoutes);
 const chatRoutes = require('./routes/chat');
 app.use('/api', chatRoutes);
 
+// Initialize database with seed data if empty
+async function initializeDatabase() {
+  try {
+    const prisma = require('./lib/prisma');
+    const productCount = await prisma.product.count();
+    
+    if (productCount === 0) {
+      console.log('🌱 Database is empty. Seeding with initial data...');
+      const seedScript = require('../prisma/seed.js');
+      // Note: seed.js will be executed separately in package.json scripts
+      console.log('💡 Please run: npm run seed');
+    } else {
+      console.log(`✅ Database initialized with ${productCount} products`);
+    }
+  } catch (error) {
+    console.log('📊 Database check: Skipping seed initialization');
+  }
+}
+
+// Call initialization
+initializeDatabase();
+
 // 404 handler
 app.use(notFoundHandler);
 
