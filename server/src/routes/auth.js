@@ -7,13 +7,25 @@ const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ── Demo/fallback users for when database is unavailable (e.g., Vercel + SQLite) ──
-const DEMO_ADMIN_HASH = bcrypt.hashSync('admin123', 10);
+const DEMO_ADMIN_HASH = bcrypt.hashSync('PethiveAdmin2026!', 10);
 const DEMO_USERS = [
   { id: 'demo-admin-001', email: 'admin@example.com', name: 'Admin User', password: DEMO_ADMIN_HASH, role: 'admin', picture: 'https://via.placeholder.com/150' },
   { id: 'demo-customer-001', email: 'user@example.com', name: 'Demo User', password: bcrypt.hashSync('user123', 10), role: 'customer', picture: 'https://via.placeholder.com/150' },
 ];
 
 const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+
+// Helper: check if database is reachable
+async function isDatabaseAvailable() {
+  try {
+    const databaseLikelyBroken = isVercel && (process.env.DATABASE_URL || '').startsWith('file:');
+    if (databaseLikelyBroken) return false;
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // Email/Password Register
 router.post('/register', async (req, res) => {
@@ -24,42 +36,35 @@ router.post('/register', async (req, res) => {
   }
 
   try {
-    // Try DB first unless we know we're on Vercel with SQLite
-    const databaseLikelyBroken = isVercel && (process.env.DATABASE_URL || '').startsWith('file:');
-    
-    if (!databaseLikelyBroken) {
-      try {
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) {
-          return res.status(400).json({ error: 'User already exists' });
-        }
+    const dbAvailable = await isDatabaseAvailable();
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = await prisma.user.create({
-          data: {
-            email,
-            password: hashedPassword,
-            name: name || 'New User',
-            role: 'customer'
-          }
-        });
-
-        req.session.userId = user.id;
-        return res.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } });
-      } catch (dbError) {
-        console.error('Database register failed, attempting fallback:', dbError.message);
-        // Fall through to demo backup
-      }
+    if (!dbAvailable) {
+      // Fallback: create a demo session for the registered user
+      const demoUser = { id: 'demo-' + Date.now(), email, name: name || 'New User', role: 'customer' };
+      req.session.userId = demoUser.id;
+      req.session.demoUser = demoUser;
+      return res.json({ user: demoUser });
     }
 
-    // Demo Fallback
-    const demoUser = { id: 'demo-' + Date.now(), email, name: name || 'New User', role: 'customer' };
-    req.session.userId = demoUser.id;
-    req.session.demoUser = demoUser;
-    return res.json({ user: demoUser });
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
 
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        name: name || 'New User',
+        role: 'customer'
+      }
+    });
+
+    req.session.userId = user.id;
+    res.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   } catch (error) {
-    console.error('Register error (final catch):', error);
+    console.error('Register error:', error);
     res.status(500).json({ error: 'Registration failed' });
   }
 });
@@ -101,7 +106,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Only return 401 if it's not a demo user AND not a DB user
-    res.status(401).json({ error: 'Invalid credentials. Try admin@example.com / admin123' });
+    res.status(401).json({ error: 'Invalid credentials. Try admin@example.com / PethiveAdmin2026!' });
 
   } catch (error) {
     console.error('Login error (final catch):', error);

@@ -8,6 +8,7 @@ const Login = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ email: '', password: '', name: '' });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   // We'll might need to update AuthContext to handle login properly if it's not exposing a direct login function that takes args
   // For now I'll do direct API call then reload or update state if I can see AuthContext later.
@@ -20,6 +21,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     
     try {
       const endpoint = isLogin ? '/auth/login' : '/auth/register';
@@ -40,6 +42,8 @@ const Login = () => {
     } catch (err) {
       const errMsg = err.response?.data?.error;
       setError(typeof errMsg === 'string' ? errMsg : (errMsg?.message || 'Authentication failed'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,10 +123,20 @@ const Login = () => {
 
             <button
               type="submit"
-              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+              disabled={loading}
+              className={`w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-95'}`}
             >
-              {isLogin ? 'Sign In' : 'Create Account'}
-              <ArrowRight className="w-5 h-5" />
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  {isLogin ? 'Sign In' : 'Create Account'}
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
           </form>
 
