@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../../lib/api';
 import { Send, User as UserIcon, Shield, Trash2, Bold, Italic, Code } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -25,7 +25,7 @@ const AdminChat = () => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/admin/messages', { withCredentials: true });
+      const res = await api.get('/admin/messages', { withCredentials: true });
       // Ideally check diff to avoid jitter, but direct set is mostly fine for text
       setMessages(res.data);
     } catch (error) {
@@ -39,7 +39,7 @@ const AdminChat = () => {
 
     try {
       setLoading(true);
-      await axios.post('http://localhost:3001/api/admin/messages', { content: newMessage }, { withCredentials: true });
+      await api.post('/admin/messages', { content: newMessage }, { withCredentials: true });
       setNewMessage('');
       fetchMessages();
     } catch (error) {
@@ -65,7 +65,7 @@ const AdminChat = () => {
         isDanger: true,
         onConfirm: async () => {
             try {
-                await axios.delete(`http://localhost:3001/api/admin/messages/${id}`, { withCredentials: true });
+                await api.delete(`/admin/messages/${id}`, { withCredentials: true });
                 fetchMessages();
             } catch(e) { alert("Failed to delete"); }
         }
@@ -80,7 +80,7 @@ const AdminChat = () => {
         isDanger: true,
         onConfirm: async () => {
             try {
-                await axios.delete(`http://localhost:3001/api/admin/messages`, { withCredentials: true });
+                await api.delete(`/admin/messages`, { withCredentials: true });
                 fetchMessages();
             } catch(e) { alert("Failed to clear chat"); }
         }

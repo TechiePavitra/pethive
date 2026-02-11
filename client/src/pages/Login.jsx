@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../lib/api';
 import { Helmet } from 'react-helmet-async';
 import { Lock, Mail, User as UserIcon, ArrowRight } from 'lucide-react';
 
@@ -23,7 +23,7 @@ const Login = () => {
     
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const response = await axios.post(`http://localhost:3001${endpoint}`, formData, {
+      const response = await api.post(endpoint, formData, {
         withCredentials: true
       });
       

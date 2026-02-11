@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../lib/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DollarSign, ShoppingCart, Users, TrendingUp } from 'lucide-react';
 
@@ -22,7 +22,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await axios.get('http://localhost:3001/api/admin/stats', { withCredentials: true });
+        const res = await api.get('/admin/stats', { withCredentials: true });
         setStats(res.data);
       } catch (error) {
         console.error('Error fetching stats:', error);

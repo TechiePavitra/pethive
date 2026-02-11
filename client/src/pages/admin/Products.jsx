@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../lib/api';
 import { Plus, Trash2, Edit2, X } from 'lucide-react';
 
 const AdminProducts = () => {
@@ -21,8 +21,8 @@ const AdminProducts = () => {
   const fetchData = async () => {
     try {
       const [prodRes, catRes] = await Promise.all([
-        axios.get('http://localhost:3001/api/products'),
-        axios.get('http://localhost:3001/api/categories')
+        api.get('/products'),
+        api.get('/categories')
       ]);
       // Handle both old format (array) and new format (object with products array)
       const productsData = Array.isArray(prodRes.data) ? prodRes.data : prodRes.data.products;
@@ -36,7 +36,7 @@ const AdminProducts = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
-      await axios.delete(`http://localhost:3001/api/admin/products/${id}`, { withCredentials: true });
+      await api.delete(`/admin/products/${id}`, { withCredentials: true });
       setProducts(products.filter(p => p.id !== id));
     } catch (error) {
       alert('Failed to delete product');
@@ -75,9 +75,9 @@ const AdminProducts = () => {
       };
 
       if (editingId) {
-        await axios.put(`http://localhost:3001/api/admin/products/${editingId}`, payload, { withCredentials: true });
+        await api.put(`/admin/products/${editingId}`, payload, { withCredentials: true });
       } else {
-        await axios.post('http://localhost:3001/api/admin/products', payload, { withCredentials: true });
+        await api.post('/admin/products', payload, { withCredentials: true });
       }
       
       setIsAdding(false);

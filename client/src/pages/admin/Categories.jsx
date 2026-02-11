@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../lib/api';
 import { Plus, Trash2, Tag, Edit2, X, Save } from 'lucide-react';
 
 const AdminCategories = () => {
@@ -14,7 +14,7 @@ const AdminCategories = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/categories');
+      const res = await api.get('/categories');
       setCategories(res.data);
     } catch (error) {
       console.error('Failed to load categories');
@@ -29,9 +29,9 @@ const AdminCategories = () => {
 
     try {
       if (editingId) {
-        await axios.put(`http://localhost:3001/api/admin/categories/${editingId}`, formData, { withCredentials: true });
+        await api.put(`/admin/categories/${editingId}`, formData, { withCredentials: true });
       } else {
-        await axios.post('http://localhost:3001/api/admin/categories', formData, { withCredentials: true });
+        await api.post('/admin/categories', formData, { withCredentials: true });
       }
       
       setFormData({ name: '', slug: '' });
@@ -57,7 +57,7 @@ const AdminCategories = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure? Category must be empty.')) return;
     try {
-      await axios.delete(`http://localhost:3001/api/admin/categories/${id}`, { withCredentials: true });
+      await api.delete(`/admin/categories/${id}`, { withCredentials: true });
       fetchCategories();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to delete category');
