@@ -4,6 +4,7 @@ import { X, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import api from '../lib/api';
+import { parseImages } from '../lib/parseImages';
 
 export default function CartDrawer() {
   const { cart, removeFromCart, updateQuantity, total, isOpen, setIsOpen, clearCart } = useCart();
@@ -60,7 +61,7 @@ export default function CartDrawer() {
                   <div key={item.productId} className="flex gap-4">
                     <div className="w-20 h-20 bg-gray-100 rounded overflow-hidden flex-shrink-0">
                       <img 
-                        src={JSON.parse(item.product.images || '[]')[0] || 'https://via.placeholder.com/150'} 
+                        src={parseImages(item.product.images)[0] || 'https://via.placeholder.com/150'} 
                         alt={item.product.name} 
                         className="w-full h-full object-cover"
                       />

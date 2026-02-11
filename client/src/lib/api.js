@@ -38,8 +38,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      // Server responded with error status
-      console.error('API Error:', error.response.data);
+      // Don't log expected 401 from /auth/me (user not logged in)
+      const url = error.response.config?.url || '';
+      if (error.response.status === 401 && url.includes('/auth/me')) {
+        // Silently handle — AuthContext already manages this
+      } else {
+        console.error('API Error:', error.response.data);
+      }
     } else if (error.request) {
       // Request made but no response
       console.error('Network Error: No response from server');

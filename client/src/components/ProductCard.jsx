@@ -2,15 +2,10 @@ import { Link } from 'react-router-dom';
 import Button from './Button';
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { parseImages } from '../lib/parseImages';
 
 export default function ProductCard({ product }) {
-  let images = [];
-  try {
-    images = JSON.parse(product.images || '[]');
-  } catch (e) {
-    console.error('Failed to parse product images:', product.id, e);
-    images = []; // Fallback
-  }
+  const images = parseImages(product.images);
   
   const image = images[0] || 'https://via.placeholder.com/300';
   const { addToCart } = useCart();

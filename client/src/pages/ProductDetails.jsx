@@ -4,6 +4,7 @@ import api from '../lib/api';
 import Button from '../components/Button';
 import { useCart } from '../context/CartContext';
 import { Helmet } from 'react-helmet-async';
+import { parseImages } from '../lib/parseImages';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -26,7 +27,7 @@ export default function ProductDetails() {
   if (loading) return <div className="text-center py-12">Loading...</div>;
   if (!product) return <div className="text-center py-12">Product not found</div>;
 
-  const images = JSON.parse(product.images || '[]');
+  const images = parseImages(product.images);
   const image = images[0] || 'https://via.placeholder.com/600';
 
   return (
