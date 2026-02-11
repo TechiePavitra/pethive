@@ -174,7 +174,7 @@ router.post('/google', async (req, res) => {
 // Get Current User
 router.get('/me', async (req, res) => {
   if (!req.session.userId) {
-    return res.status(401).json({ error: 'Not authenticated' });
+    return res.json({ user: null }); // Return 200 OK to prevent console noise
   }
 
   // If it's explicitly a demo session, return it immediately
@@ -197,7 +197,7 @@ router.get('/me', async (req, res) => {
     return res.json({ user: { id: demoUser.id, email: demoUser.email, name: demoUser.name, role: demoUser.role } });
   }
 
-  res.status(401).json({ error: 'User not found' });
+  res.json({ user: null }); // Fallback to null user (200 OK)
 });
 
 // Logout
