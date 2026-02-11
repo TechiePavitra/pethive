@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import api from '../lib/api';
 import ProductCard from '../components/ProductCard';
 import { Helmet } from 'react-helmet-async';
@@ -10,21 +10,7 @@ export default function Shop() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Fetch categories
-    api.get('/categories').then(res => setCategories(res.data)).catch(err => console.error(err));
-    
-    // Fetch products
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    if (selectedCategory !== undefined) {
-      fetchProducts();
-    }
-  }, [selectedCategory]);
-
-  const fetchProducts = () => {
+  const fetchProducts = useCallback(() => {
     setLoading(true);
     setError(null);
     const params = selectedCategory ? { category: selectedCategory } : {};
@@ -40,7 +26,15 @@ export default function Shop() {
         setError('Failed to load products. Please make sure the backend server is running.');
         setLoading(false);
       });
-  };
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    // Fetch categories
+    api.get('/categories').then(res => setCategories(res.data)).catch(err => console.error(err));
+    
+    // Fetch products
+    fetchProducts();
+  }, [fetchProducts]);
 
   return (
     <div className="container mx-auto px-4 py-8">

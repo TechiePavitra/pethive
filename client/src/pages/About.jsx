@@ -68,10 +68,10 @@ export default function About() {
                 <h2 className="text-3xl font-heading font-bold text-slate-900 mb-6">More Than Just a Store</h2>
                 <div className="space-y-6 text-slate-600">
                   <p>
-                    At PetHive, we curate our collection with obsessive care. We don't just sell products; we solve problems for pet parents. From organic nutrition to durable toys designed for heavy chewers, every item passes our rigorous "tail wag" test.
+                    At PetHive, we curate our collection with obsessive care. We don&apos;t just sell products; we solve problems for pet parents. From organic nutrition to durable toys designed for heavy chewers, every item passes our rigorous &quot;tail wag&quot; test.
                   </p>
                   <p>
-                    Our journey began when we couldn't find quality supplies for our own pets that matched our modern aesthetic and quality standards. So, we built the store we wished existed.
+                    Our journey began when we couldn&apos;t find quality supplies for our own pets that matched our modern aesthetic and quality standards. So, we built the store we wished existed.
                   </p>
                 </div>
               </div>

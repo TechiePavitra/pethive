@@ -123,7 +123,7 @@ export default function Home() {
                   <div className="text-xs text-slate-500">Verified Buyer</div>
                 </div>
               </div>
-              <p className="text-sm text-slate-600">"My golden retriever emphasizes loves the new organic treats! Fast delivery too."</p>
+              <p className="text-sm text-slate-600">&quot;My golden retriever absolutely loves the new organic treats! Fast delivery too.&quot;</p>
               <div className="flex text-amber-500 mt-2">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-current" />)}
               </div>
@@ -137,7 +137,7 @@ export default function Home() {
         <div className="text-center max-w-2xl mx-auto mb-16">
           <span className="text-amber-600 font-bold tracking-wider uppercase text-sm">Browse by Category</span>
           <h2 className="text-4xl font-heading font-bold text-slate-900 mt-2 mb-4">Everything Your Pet Needs</h2>
-          <p className="text-slate-600">We've curated the best products for every type of pet. Find exactly what you're looking for.</p>
+          <p className="text-slate-600">We&apos;ve curated the best products for every type of pet. Find exactly what you&apos;re looking for.</p>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
