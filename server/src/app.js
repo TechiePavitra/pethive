@@ -12,6 +12,7 @@ if (!process.env.DATABASE_URL) {
 
 console.log('📝 DATABASE_URL:', process.env.DATABASE_URL);
 const app = express();
+app.set('trust proxy', 1); // Enable trust proxy for Vercel/proxies
 const PORT = process.env.PORT || 3001;
 
 // Import middleware

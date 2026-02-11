@@ -30,14 +30,8 @@ const Login = () => {
       });
       
       if (response.data.user) {
-        // Successful login/register
-        // Redirect based on role
-        if (response.data.user.role === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/');
-        }
-        window.location.reload(); // Quick fix to refresh AuthContext state
+        // Successful login/register - Use hard redirect to ensure session is fresh
+        window.location.href = response.data.user.role === 'admin' ? '/admin' : '/';
       }
     } catch (err) {
       const errMsg = err.response?.data?.error;
