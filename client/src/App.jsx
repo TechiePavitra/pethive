@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar'; // Kept for reference or if PublicLayout uses it internally, but PublicLayout imports it too.
 import Home from './pages/Home';
 import Shop from './pages/Shop';
 import ProductDetails from './pages/ProductDetails';

@@ -19,7 +19,9 @@ export default function Shop() {
   }, []);
 
   useEffect(() => {
-    fetchProducts();
+    if (selectedCategory !== undefined) {
+      fetchProducts();
+    }
   }, [selectedCategory]);
 
   const fetchProducts = () => {

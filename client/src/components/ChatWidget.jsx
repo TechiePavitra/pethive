@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Minimize2, Trash2, Edit2, MoreVertical, Bold, Italic, Code, Terminal } from 'lucide-react';
+import { MessageCircle, Send, Minimize2, Trash2, Edit2, Bold, Italic, Code } from 'lucide-react';
 import api from '../lib/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ConfirmModal from './ConfirmModal';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
 
 const ChatWidget = () => {
   const { user } = useAuth();
@@ -41,6 +40,7 @@ const ChatWidget = () => {
       // For simplicity in this demo, strict update.
       setMessages(res.data);
     } catch (error) {
+      console.error('Failed to fetch messages:', error);
     }
   };
 
@@ -98,7 +98,9 @@ const ChatWidget = () => {
             try {
                 await api.delete(`/messages/${id}`);
                 fetchMessages();
-            } catch(e) {}
+            } catch(e) {
+              console.error('Failed to delete message:', e);
+            }
         }
     });
   };
@@ -176,13 +178,13 @@ const ChatWidget = () => {
                           >
                           {/* Explicit styles for markdown elements because Tailwind reset clears them */}
                           <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-                              p: ({node, ...props}) => <p className="mb-1 last:mb-0" {...props} />,
-                              a: ({node, ...props}) => <a className="underline font-bold text-inherit" {...props} />,
-                              ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                              ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2" {...props} />,
-                              strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
-                              em: ({node, ...props}) => <em className="italic" {...props} />,
-                              code: ({node, ...props}) => <code className="bg-black/20 rounded px-1 py-0.5 font-mono text-xs" {...props} />,
+                              p: ({...props}) => <p className="mb-1 last:mb-0" {...props} />,
+                              a: ({...props}) => <a className="underline font-bold text-inherit" {...props} />,
+                              ul: ({...props}) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                              ol: ({...props}) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                              strong: ({...props}) => <strong className="font-bold" {...props} />,
+                              em: ({...props}) => <em className="italic" {...props} />,
+                              code: ({...props}) => <code className="bg-black/20 rounded px-1 py-0.5 font-mono text-xs" {...props} />,
                           }}>
                               {msg.content}
                           </ReactMarkdown>

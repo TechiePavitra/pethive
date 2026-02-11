@@ -162,13 +162,13 @@ const AdminChat = () => {
                 </div>
                 <div className="text-sm leading-relaxed override-markdown">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
-                    p: ({node, ...props}) => <p className="mb-1 last:mb-0" {...props} />,
-                    a: ({node, ...props}) => <a className="underline font-bold text-inherit" {...props} />,
-                    ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2" {...props} />,
-                    ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2" {...props} />,
-                    strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
-                    em: ({node, ...props}) => <em className="italic" {...props} />,
-                    code: ({node, ...props}) => <code className="bg-black/20 rounded px-1 py-0.5 font-mono text-xs" {...props} />,
+                    p: ({...props}) => <p className="mb-1 last:mb-0" {...props} />,
+                    a: ({...props}) => <a className="underline font-bold text-inherit" {...props} />,
+                    ul: ({...props}) => <ul className="list-disc ml-4 mb-2" {...props} />,
+                    ol: ({...props}) => <ol className="list-decimal ml-4 mb-2" {...props} />,
+                    strong: ({...props}) => <strong className="font-bold" {...props} />,
+                    em: ({...props}) => <em className="italic" {...props} />,
+                    code: ({...props}) => <code className="bg-black/20 rounded px-1 py-0.5 font-mono text-xs" {...props} />,
                   }}>
                     {msg.content}
                   </ReactMarkdown>

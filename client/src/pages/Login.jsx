@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../context/AuthContext'; // Assuming AuthContext exists or we will standard context usage
 import { Helmet } from 'react-helmet-async';
 import { Lock, Mail, User as UserIcon, ArrowRight } from 'lucide-react';
 
