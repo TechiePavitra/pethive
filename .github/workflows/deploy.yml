@@ -41,5 +41,6 @@ jobs:
         run: |
           cd server
           npx prisma db push
+          npm run seed
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
