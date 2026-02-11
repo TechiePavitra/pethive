@@ -4,13 +4,41 @@ const router = express.Router();
 
 // Middleware to check if user is admin
 const isAdmin = async (req, res, next) => {
-  if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
-  
-  const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
-  if (!user || user.role !== 'admin') {
-    return res.status(403).json({ error: 'Access denied: Admins only' });
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    // Support Demo Session
+    if (req.session.demoUser) {
+      if (req.session.demoUser.role === 'admin') {
+        return next();
+      }
+      return res.status(403).json({ error: 'Access denied: Admins only' });
+    }
+
+    // DB fallback check
+    try {
+      const user = await prisma.user.findUnique({ where: { id: req.session.userId } });
+      if (user && user.role === 'admin') {
+        return next();
+      }
+    } catch (dbError) {
+      console.warn('Admin check DB access failed, checking session data');
+    }
+
+    // Final fallback if DB is down but session userId is one of our demo admins
+    // (This handles cases where the session exists but the DB is gone)
+    const demoAdminIds = ['demo-admin-001']; 
+    if (demoAdminIds.includes(req.session.userId)) {
+      return next();
+    }
+
+    res.status(403).json({ error: 'Access denied: Admins only' });
+  } catch (error) {
+    console.error('isAdmin middleware error:', error);
+    res.status(500).json({ error: 'Authentication check failed' });
   }
-  next();
 };
 
 router.use(isAdmin);

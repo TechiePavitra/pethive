@@ -25,7 +25,7 @@ const Dashboard = () => {
         const res = await api.get('/admin/stats', { withCredentials: true });
         setStats(res.data);
       } catch (error) {
-        console.error('Error fetching stats:', error);
+        console.error('Error fetching stats:', error.response?.data?.error || error.message);
       } finally {
         setLoading(false);
       }
