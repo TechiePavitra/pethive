@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../lib/api';
-import { Plus, Trash2, Edit2, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Search, Filter, Loader2, Package, Tag, DollarSign, Archive } from 'lucide-react';
 
-const AdminProducts = () => {
+const Products = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   
-  // Form State
+  // Drawer/Modal State
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formLoading, setFormLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '', description: '', price: '', categoryId: '', 
     stock: '', images: '', discount: '0', isOffer: false
@@ -19,24 +23,26 @@ const AdminProducts = () => {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [prodRes, catRes] = await Promise.all([
         api.get('/products'),
         api.get('/categories')
       ]);
-      // Handle both old format (array) and new format (object with products array)
       const productsData = Array.isArray(prodRes.data) ? prodRes.data : prodRes.data.products;
       setProducts(productsData);
       setCategories(catRes.data);
     } catch (error) {
       console.error('Error loading data', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    if (!window.confirm('Are you sure you want to remove this item from inventory?')) return;
     try {
-      await api.delete(`/admin/products/${id}`, { withCredentials: true });
+      await api.delete(`/admin/products/${id}`);
       setProducts(products.filter(p => p.id !== id));
     } catch (error) {
       alert('Failed to delete product');
@@ -47,7 +53,7 @@ const AdminProducts = () => {
     setEditingId(product.id);
     let imageUrl = '';
     try {
-        const parsed = JSON.parse(product.images);
+        const parsed = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
         imageUrl = Array.isArray(parsed) ? parsed[0] : parsed;
     } catch (e) {
         imageUrl = product.images;
@@ -60,156 +66,364 @@ const AdminProducts = () => {
         categoryId: product.categoryId,
         stock: product.stock,
         images: imageUrl, 
-        discount: product.discount,
-        isOffer: product.isOffer
-    });
-    setIsAdding(true);
+        discount: product.discount || 0,
+        isOffer: product.isOffer || false
+      });
+    setIsDrawerOpen(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormLoading(true);
     try {
-      const payload = {
-        ...formData,
-        images: JSON.stringify([formData.images]), // Wrap in array for schema consistency
-      };
-
       if (editingId) {
-        await api.put(`/admin/products/${editingId}`, payload, { withCredentials: true });
+        await api.put(`/admin/products/${editingId}`, formData);
       } else {
-        await api.post('/admin/products', payload, { withCredentials: true });
+        await api.post('/admin/products', formData);
       }
       
-      setIsAdding(false);
+      setIsDrawerOpen(false);
       setEditingId(null);
       setFormData({ name: '', description: '', price: '', categoryId: '', stock: '', images: '', discount: '0', isOffer: false });
       fetchData();
     } catch (error) {
       console.error(error);
       alert('Operation failed');
+    } finally {
+      setFormLoading(false);
     }
   };
 
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === '' || p.categoryId === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  if (loading && products.length === 0) return (
+    <div className="min-h-[400px] flex items-center justify-center">
+      <Loader2 className="w-12 h-12 text-amber-500 animate-spin" />
+    </div>
+  );
+
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Product Manager</h2>
+    <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 tracking-tight">Inventory Management</h2>
+          <p className="text-slate-500 font-medium">Add, update, and manage your pet products.</p>
+        </div>
         <button 
-          onClick={() => { setIsAdding(true); setEditingId(null); setFormData({ name: '', description: '', price: '', categoryId: categories[0]?.id || '', stock: '', images: '', discount: '0', isOffer: false }); }}
-          className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all shadow-md"
+          onClick={() => { 
+            setIsDrawerOpen(true); 
+            setEditingId(null); 
+            setFormData({ name: '', description: '', price: '', categoryId: categories[0]?.id || '', stock: '', images: '', discount: '0', isOffer: false }); 
+          }}
+          className="flex items-center justify-center gap-3 px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white font-black rounded-2xl transition-all shadow-lg shadow-amber-200 active:scale-95 group"
         >
-          <Plus className="w-5 h-5" />
-          Add Product
+          <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform" />
+          ADD PRODUCT
         </button>
       </div>
 
-      {isAdding && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold">{editingId ? 'Edit Product' : 'New Product'}</h3>
-              <button onClick={() => setIsAdding(false)} className="text-gray-400 hover:text-gray-600">
+      {/* Filters Bar */}
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
+          <input 
+            type="text"
+            placeholder="Search products by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 bg-white rounded-2xl border border-slate-100 focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 outline-none transition-all font-medium text-slate-700 shadow-sm"
+          />
+        </div>
+        <div className="relative flex-1 md:max-w-xs group">
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 bg-white rounded-2xl border border-slate-100 focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 outline-none transition-all font-medium text-slate-700 shadow-sm appearance-none"
+          >
+            <option value="">All Categories</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Product List */}
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-widest text-slate-400">Product Info</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-widest text-slate-400">Category</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-widest text-slate-400">Price & Stock</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-widest text-slate-400">Status</th>
+                <th className="px-8 py-6 text-xs font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredProducts.map(product => {
+                let img = '';
+                try { 
+                  const p = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
+                  img = Array.isArray(p) ? p[0] : p; 
+                } catch(e) { img = product.images; }
+                
+                return (
+                  <tr key={product.id} className="group hover:bg-slate-50/50 transition-colors">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden border border-slate-100 bg-slate-100 shrink-0">
+                          <img src={img} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        </div>
+                        <div>
+                          <h4 className="font-black text-slate-900 text-sm uppercase tracking-tight line-clamp-1">{product.name}</h4>
+                          <p className="text-slate-400 text-xs font-medium mt-1 line-clamp-1">{product.description}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-black uppercase tracking-tight">
+                        <Tag className="w-3 h-3" />
+                        {product.category?.name || 'Uncategorized'}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 font-black text-slate-900">
+                          <DollarSign className="w-4 h-4 text-emerald-500" />
+                          {product.price.toFixed(2)}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase">
+                          <Archive className="w-3 h-3" />
+                          {product.stock} in stock
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                       <div className="flex flex-wrap gap-2">
+                        {product.isOffer && (
+                          <span className="px-2 py-1 bg-rose-100 text-rose-600 rounded-lg text-[10px] font-black uppercase tracking-widest">OFFER</span>
+                        )}
+                        {product.discount > 0 && (
+                          <span className="px-2 py-1 bg-emerald-100 text-emerald-600 rounded-lg text-[10px] font-black uppercase tracking-widest">-{product.discount}%</span>
+                        )}
+                        {!product.isOffer && product.discount === 0 && (
+                          <span className="px-2 py-1 bg-slate-100 text-slate-400 rounded-lg text-[10px] font-black uppercase tracking-widest">NORMAL</span>
+                        )}
+                       </div>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => handleEdit(product)}
+                          className="p-3 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-amber-500 hover:text-white transition-all shadow-sm active:scale-95"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(product.id)}
+                          className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {filteredProducts.length === 0 && (
+          <div className="px-8 py-20 text-center space-y-4">
+            <div className="w-20 h-20 bg-slate-50 rounded-[2rem] flex items-center justify-center mx-auto text-slate-200">
+              <Package className="w-10 h-10" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900">No Inventory Found</h3>
+              <p className="text-slate-400 font-medium">Try adjusting your filters or add a new product.</p>
+            </div>
+            <button 
+              onClick={() => { setIsDrawerOpen(true); setEditingId(null); }}
+              className="px-6 py-3 bg-slate-900 text-white font-black rounded-2xl hover:bg-amber-500 transition-colors uppercase tracking-tight text-xs"
+            >
+              Add First Product
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Drawer Overlay */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setIsDrawerOpen(false)} />
+          
+          <div className="relative w-full max-w-xl bg-white shadow-2xl animate-in slide-in-from-right duration-500 flex flex-col">
+            {/* Drawer Header */}
+            <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">
+                  {editingId ? 'Update Inventory' : 'Add to Stock'}
+                </h3>
+                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-1">Product Details</p>
+              </div>
+              <button 
+                onClick={() => setIsDrawerOpen(false)}
+                className="p-3 bg-white border border-slate-100 rounded-2xl text-slate-400 hover:text-rose-500 transition-colors shadow-sm"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
-            
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-8">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                  <input required className="w-full border rounded-lg p-2" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">Item Name</label>
+                  <input 
+                    required 
+                    type="text"
+                    value={formData.name}
+                    onChange={e => setFormData({...formData, name: e.target.value})}
+                    placeholder="e.g. Premium Dog Kibble"
+                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-slate-100 focus:border-amber-500 outline-none transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                  />
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
-                  <input required type="number" step="0.01" className="w-full border rounded-lg p-2" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">Detailed Description</label>
+                  <textarea 
+                    required 
+                    value={formData.description}
+                    onChange={e => setFormData({...formData, description: e.target.value})}
+                    placeholder="What makes this product special?"
+                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-slate-100 focus:border-amber-500 outline-none transition-all font-bold text-slate-700 min-h-[120px] resize-none placeholder:text-slate-300"
+                  />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea required className="w-full border rounded-lg p-2 h-24" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
-              </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">Price (USD)</label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        required 
+                        type="number" step="0.01"
+                        value={formData.price}
+                        onChange={e => setFormData({...formData, price: e.target.value})}
+                        className="w-full pl-10 pr-5 py-4 bg-slate-50 rounded-2xl border border-slate-100 focus:border-amber-500 outline-none transition-all font-bold text-slate-700"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">In Stock</label>
+                    <div className="relative">
+                      <Archive className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        required 
+                        type="number"
+                        value={formData.stock}
+                        onChange={e => setFormData({...formData, stock: e.target.value})}
+                        className="w-full pl-10 pr-5 py-4 bg-slate-50 rounded-2xl border border-slate-100 focus:border-amber-500 outline-none transition-all font-bold text-slate-700"
+                      />
+                    </div>
+                  </div>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select className="w-full border rounded-lg p-2" value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})}>
-                    <option value="">Select Category</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">Category Assignment</label>
+                  <div className="relative">
+                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <select 
+                      required
+                      value={formData.categoryId}
+                      onChange={e => setFormData({...formData, categoryId: e.target.value})}
+                      className="w-full pl-10 pr-5 py-4 bg-slate-50 rounded-2xl border border-slate-100 focus:border-amber-500 outline-none transition-all font-bold text-slate-700 appearance-none shadow-sm"
+                    >
+                      <option value="">Select a Category</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-                  <input required type="number" className="w-full border rounded-lg p-2" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} />
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">Product Image (URL)</label>
+                  <input 
+                    required 
+                    type="text"
+                    value={formData.images}
+                    onChange={e => setFormData({...formData, images: e.target.value})}
+                    placeholder="https://images.unsplash.com/..."
+                    className="w-full px-5 py-4 bg-slate-50 rounded-2xl border border-slate-100 focus:border-amber-500 outline-none transition-all font-bold text-slate-700 placeholder:text-slate-300"
+                  />
+                  {formData.images && (
+                    <div className="mt-4 w-full h-40 rounded-3xl overflow-hidden border border-slate-100 bg-slate-50 p-2">
+                       <img src={formData.images} alt="Preview" className="w-full h-full object-cover rounded-2xl shadow-inner shadow-slate-200" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-amber-50/50 p-8 rounded-3xl border border-amber-100/50 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-black text-amber-900 text-sm uppercase tracking-tight">Special Offer</h4>
+                      <p className="text-amber-600 text-[10px] font-bold uppercase tracking-widest">Flash sale or promo label</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only peer"
+                        checked={formData.isOffer}
+                        onChange={e => setFormData({...formData, isOffer: e.target.checked})}
+                      />
+                      <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                  </div>
+                  
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-amber-700 ml-1 block mb-2">Discount Percentage (%)</label>
+                    <input 
+                      type="number"
+                      value={formData.discount}
+                      onChange={e => setFormData({...formData, discount: e.target.value})}
+                      className="w-full px-5 py-4 bg-white rounded-2xl border border-amber-100 focus:border-amber-500 outline-none transition-all font-bold text-slate-700"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                <input required className="w-full border rounded-lg p-2" value={formData.images} onChange={e => setFormData({...formData, images: e.target.value})} placeholder="https://..." />
+              {/* Action Buttons */}
+              <div className="pt-8 flex flex-col gap-3 pb-12">
+                <button 
+                  type="submit" 
+                  disabled={formLoading}
+                  className="w-full py-5 bg-slate-900 hover:bg-amber-500 text-white font-black text-lg rounded-[2rem] transition-all shadow-xl shadow-slate-200 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
+                >
+                  {formLoading ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    editingId ? 'CONFIRM CHANGES' : 'PUBLISH PRODUCT'
+                  )}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="w-full py-5 bg-white text-slate-400 border border-slate-100 hover:bg-slate-50 font-black rounded-[2rem] transition-all"
+                >
+                  DISCARD
+                </button>
               </div>
-
-              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl">
-                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount (%)</label>
-                  <input type="number" className="w-full border rounded-lg p-2" value={formData.discount} onChange={e => setFormData({...formData, discount: e.target.value})} />
-                </div>
-                <div className="flex items-center gap-3">
-                  <input type="checkbox" id="isOffer" className="w-5 h-5 text-amber-500 rounded focus:ring-amber-500" checked={formData.isOffer} onChange={e => setFormData({...formData, isOffer: e.target.checked})} />
-                  <label htmlFor="isOffer" className="text-sm font-medium text-gray-700">Special Offer?</label>
-                </div>
-              </div>
-
-              <button type="submit" className="w-full bg-amber-500 text-white font-bold py-3 rounded-xl hover:bg-amber-600 transition-colors">
-                {editingId ? 'Update Product' : 'Create Product'}
-              </button>
             </form>
           </div>
         </div>
       )}
-
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 border-b border-gray-100">
-            <tr>
-              <th className="p-4 font-medium text-gray-500">Product</th>
-              <th className="p-4 font-medium text-gray-500">Price</th>
-              <th className="p-4 font-medium text-gray-500">Stock</th>
-              <th className="p-4 font-medium text-gray-500">Status</th>
-              <th className="p-4 font-medium text-gray-500">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {products.map(product => {
-                let img = '';
-                try { img = JSON.parse(product.images)[0]; } catch(e) { img = product.images; }
-                return (
-                  <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <img src={img} alt="" className="w-10 h-10 rounded-lg object-cover" />
-                        <span className="font-medium text-gray-900">{product.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-gray-600">${product.price}</td>
-                    <td className="p-4 text-gray-600">{product.stock}</td>
-                    <td className="p-4">
-                      {product.isOffer && <span className="bg-red-100 text-red-600 text-xs px-2 py-1 rounded-full font-medium">Offer</span>}
-                      {product.discount > 0 && <span className="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full font-medium ml-2">-{product.discount}%</span>}
-                    </td>
-                    <td className="p-4 flex gap-2">
-                      <button onClick={() => handleEdit(product)} className="text-gray-400 hover:text-amber-500 transition-colors"><Edit2 className="w-5 h-5" /></button>
-                      <button onClick={() => handleDelete(product.id)} className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 className="w-5 h-5" /></button>
-                    </td>
-                  </tr>
-                );
-            })}
-          </tbody>
-        </table>
-        {products.length === 0 && <div className="p-8 text-center text-gray-500">No products found.</div>}
-      </div>
     </div>
   );
 };
 
-export default AdminProducts;
+export default Products;
