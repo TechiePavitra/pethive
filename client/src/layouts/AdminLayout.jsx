@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, ShoppingBag, MessageSquare, LogOut, Package, Tag } from 'lucide-react';
-import axios from 'axios';
+import api from '../lib/api';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -11,7 +11,7 @@ const AdminLayout = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await axios.get('http://localhost:3001/api/auth/me', { withCredentials: true });
+        const res = await api.get('/auth/me');
         if (res.data.user.role !== 'admin') {
           navigate('/');
         }
@@ -25,7 +25,7 @@ const AdminLayout = () => {
 
   const handleLogout = async () => {
     try {
-      await axios.post('http://localhost:3001/api/auth/logout', {}, { withCredentials: true });
+      await api.post('/auth/logout', {});
       navigate('/login');
     } catch (error) {
       console.error('Logout failed', error);

@@ -36,6 +36,9 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "DATABASE_URL": "@database-url",
+    "SESSION_SECRET": "@session-secret",
+    "CLIENT_URL": "https://pethive-psi.vercel.app"
   }
 }

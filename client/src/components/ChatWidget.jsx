@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Minimize2, Trash2, Edit2, MoreVertical, Bold, Italic, Code, Terminal } from 'lucide-react';
-import axios from 'axios';
+import api from '../lib/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ConfirmModal from './ConfirmModal';
@@ -36,7 +36,7 @@ const ChatWidget = () => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get('http://localhost:3001/api/messages', { withCredentials: true });
+      const res = await api.get('/messages');
       // Only update if changes to avoid re-renders interrupting edit?
       // For simplicity in this demo, strict update.
       setMessages(res.data);
@@ -51,10 +51,10 @@ const ChatWidget = () => {
     try {
       setLoading(true);
       if (editingId) {
-        await axios.put(`http://localhost:3001/api/messages/${editingId}`, { content: newMessage }, { withCredentials: true });
+        await api.put(`/messages/${editingId}`, { content: newMessage });
         setEditingId(null);
       } else {
-        await axios.post('http://localhost:3001/api/messages', { content: newMessage }, { withCredentials: true });
+        await api.post('/messages', { content: newMessage });
       }
       setNewMessage('');
       fetchMessages();
@@ -81,7 +81,7 @@ const ChatWidget = () => {
         isDanger: true,
         onConfirm: async () => {
             try {
-                await axios.delete('http://localhost:3001/api/messages', { withCredentials: true });
+                await api.delete('/messages');
                 setMessages([]);
             } catch(e) { alert('Failed to clear'); }
         }
@@ -96,7 +96,7 @@ const ChatWidget = () => {
         isDanger: true,
         onConfirm: async () => {
             try {
-                await axios.delete(`http://localhost:3001/api/messages/${id}`, { withCredentials: true });
+                await api.delete(`/messages/${id}`);
                 fetchMessages();
             } catch(e) {}
         }

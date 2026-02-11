@@ -1,7 +1,18 @@
 import axios from 'axios';
 
+// Determine the API base URL based on environment
+const getBaseURL = () => {
+  // If running on Vercel, use relative /api path (routes to backend)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Default to /api for production (Vercel)
+  return '/api';
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: getBaseURL(),
   withCredentials: true,
   timeout: 10000,
 });
