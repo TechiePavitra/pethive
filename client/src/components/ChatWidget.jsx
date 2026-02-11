@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Minimize2, Trash2, Edit2, MoreVertical, Bold, Italic, Code, Terminal } from 'lucide-react';
 import api from '../lib/api';
 import ReactMarkdown from 'react-markdown';
