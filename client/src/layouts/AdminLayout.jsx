@@ -12,8 +12,11 @@ const AdminLayout = () => {
     const checkAuth = async () => {
       try {
         const res = await api.get('/auth/me');
-        if (res.data.user.role !== 'admin') {
-          navigate('/');
+        const user = res.data.user;
+        
+        if (!user || user.role !== 'admin') {
+          navigate('/login');
+          return;
         }
         setLoading(false);
       } catch (err) {
