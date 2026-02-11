@@ -7,10 +7,28 @@ const router = express.Router();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // ── Demo/fallback users for when database is unavailable (e.g., Vercel + SQLite) ──
-const DEMO_ADMIN_HASH = bcrypt.hashSync('PethiveAdmin2026!', 10);
+// High priority: use environment variables so credentials aren't exposed on GitHub
+const demoEmail = process.env.DEMO_ADMIN_EMAIL || 'admin@example.com';
+const demoPassword = process.env.DEMO_ADMIN_PASSWORD || 'PethiveAdmin2026!';
+
+const DEMO_ADMIN_HASH = bcrypt.hashSync(demoPassword, 10);
 const DEMO_USERS = [
-  { id: 'demo-admin-001', email: 'admin@example.com', name: 'Admin User', password: DEMO_ADMIN_HASH, role: 'admin', picture: 'https://via.placeholder.com/150' },
-  { id: 'demo-customer-001', email: 'user@example.com', name: 'Demo User', password: bcrypt.hashSync('user123', 10), role: 'customer', picture: 'https://via.placeholder.com/150' },
+  { 
+    id: 'demo-admin-001', 
+    email: demoEmail, 
+    name: 'Admin User', 
+    password: DEMO_ADMIN_HASH, 
+    role: 'admin', 
+    picture: 'https://via.placeholder.com/150' 
+  },
+  { 
+    id: 'demo-customer-001', 
+    email: 'user@example.com', 
+    name: 'Demo User', 
+    password: bcrypt.hashSync('user123', 10), 
+    role: 'customer', 
+    picture: 'https://via.placeholder.com/150' 
+  },
 ];
 
 const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
@@ -106,7 +124,8 @@ router.post('/login', async (req, res) => {
     }
 
     // Only return 401 if it's not a demo user AND not a DB user
-    res.status(401).json({ error: 'Invalid credentials. Try admin@example.com / PethiveAdmin2026!' });
+    const hint = demoEmail === 'admin@example.com' ? ' Hint: admin@example.com / PethiveAdmin2026!' : '';
+    res.status(401).json({ error: `Invalid credentials.${hint}` });
 
   } catch (error) {
     console.error('Login error (final catch):', error);
