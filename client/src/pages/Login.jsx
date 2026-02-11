@@ -22,7 +22,7 @@ const Login = () => {
     setError('');
     
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const endpoint = isLogin ? '/auth/login' : '/auth/register';
       const response = await api.post(endpoint, formData, {
         withCredentials: true
       });
@@ -38,7 +38,8 @@ const Login = () => {
         window.location.reload(); // Quick fix to refresh AuthContext state
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Authentication failed');
+      const errMsg = err.response?.data?.error;
+      setError(typeof errMsg === 'string' ? errMsg : (errMsg?.message || 'Authentication failed'));
     }
   };
 
