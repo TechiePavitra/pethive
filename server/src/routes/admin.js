@@ -168,119 +168,103 @@ router.post('/reset-stats', async (req, res) => {
 
 // Add Product
 router.post('/products', async (req, res) => {
-  const { name, description, price, stock, categoryId, images, discount, isOffer } = req.body;
+  const { name, description, price, categoryId, images, stock, discount, isOffer } = req.body;
   try {
     const product = await prisma.product.create({
       data: {
-        name, description, 
-        price: parseFloat(price), 
-        images: Array.isArray(images) ? images : [images],
-        categoryId,
-        stock: parseInt(stock), 
-        discount: parseFloat(discount || 0), 
-        isOffer: !!isOffer
+        name, description, price: parseFloat(price), 
+        categoryId, images: JSON.stringify(images), 
+        stock: parseInt(stock), discount: parseFloat(discount || 0), isOffer: !!isOffer
       }
     });
     res.json(product);
   } catch (error) {
-    console.warn('DB creation failed, simulating successful creation for Demo Mode');
-    // Simulation for Demo Mode
-    res.json({
-      id: `demo-prod-${Date.now()}`,
-      name, description, price, stock, categoryId, 
-      images: Array.isArray(images) ? images : [images],
-      createdAt: new Date(),
-      message: 'Product created successfully (Demo Mode)'
-    });
+    res.status(500).json({ error: 'Failed to create product' });
   }
 });
 
 // Update Product (e.g. Discount)
 router.put('/products/:id', async (req, res) => {
   const { id } = req.params;
-  const { discount, price, isOffer, stock, name, description } = req.body;
+  const { discount, price, isOffer, stock } = req.body;
   try {
     const product = await prisma.product.update({
       where: { id },
       data: { 
-        discount: discount !== undefined ? parseFloat(discount) : undefined,
-        price: price !== undefined ? parseFloat(price) : undefined,
-        isOffer: isOffer !== undefined ? !!isOffer : undefined,
-        stock: stock !== undefined ? parseInt(stock) : undefined,
-        name,
-        description
+        ...(discount !== undefined && { discount: parseFloat(discount) }),
+        ...(price !== undefined && { price: parseFloat(price) }),
+        ...(isOffer !== undefined && { isOffer: !!isOffer }),
+        ...(stock !== undefined && { stock: parseInt(stock) })
       }
     });
     res.json(product);
   } catch (error) {
-    console.warn(`DB update for ${id} failed, simulating success for Demo Mode`);
-    res.json({ 
-      id, 
-      message: 'Product updated successfully (Demo Mode)',
-      updatedAt: new Date()
-    });
+    res.status(500).json({ error: 'Failed to update product' });
   }
 });
 
 // Delete Product
 router.delete('/products/:id', async (req, res) => {
-  const { id } = req.params;
   try {
-    await prisma.product.delete({
-      where: { id }
-    });
+    await prisma.product.delete({ where: { id: req.params.id } });
     res.json({ message: 'Product deleted' });
   } catch (error) {
-    console.warn(`DB delete for ${id} failed, simulating success for Demo Mode`);
-    res.json({ message: 'Product deleted (Demo Mode)' });
+    res.status(500).json({ error: 'Failed to delete product' });
   }
 });
 
-// --- Messaging/Chat Management ---
+// --- Chat / Messages ---
 
-// Get all messages
+// Get all messages (for admin view)
 router.get('/messages', async (req, res) => {
   try {
     const messages = await prisma.message.findMany({
-      include: { user: true },
+      include: { user: { select: { email: true, name: true } } },
       orderBy: { createdAt: 'desc' }
     });
     res.json(messages);
   } catch (error) {
-    console.warn('DB fetch messages failed, returning mock messages');
-    res.json([
-      { id: '1', content: 'Hello, I have a question about my order.', user: { name: 'John Doe' }, createdAt: new Date() },
-      { id: '2', content: 'Is the premium dog food back in stock?', user: { name: 'Jane Smith' }, createdAt: new Date(Date.now() - 3600000) }
-    ]);
+    res.status(500).json({ error: 'Failed to fetch messages' });
   }
 });
 
 // Send a reply (or message as admin)
 router.post('/messages', async (req, res) => {
-  const { content, userId } = req.body;
+  const { content, userId } = req.body; // If replying to specific user
   try {
     const message = await prisma.message.create({
       data: {
         content,
-        userId,
+        userId: userId || req.session.userId, // If replying, map to that user? Or just global chat?
+        // For simplicity, let's assume it's a global chat or direct reply if we have structure.
+        // Concept: Admin simply posts a message.
         isAdmin: true
       }
     });
     res.json(message);
   } catch (error) {
-    console.warn('DB create message failed, simulating success');
-    res.json({ id: Date.now(), content, isAdmin: true, createdAt: new Date() });
+    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 
-// Clear all chat
-router.delete('/messages/clear', async (req, res) => {
+// Delete a message (Admin)
+router.delete('/messages/:id', async (req, res) => {
   try {
-    await prisma.message.deleteMany();
+    const { id } = req.params;
+    await prisma.message.delete({ where: { id } });
+    res.json({ message: 'Deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete message' });
+  }
+});
+
+// Clear all messages (Admin)
+router.delete('/messages', async (req, res) => {
+  try {
+    await prisma.message.deleteMany(); // Deletes ALL messages
     res.json({ message: 'All messages cleared' });
   } catch (error) {
-    console.warn('DB clear messages failed, simulating success');
-    res.json({ message: 'All messages cleared (Demo Mode)' });
+    res.status(500).json({ error: 'Failed to clear chat' });
   }
 });
 
@@ -290,17 +274,19 @@ router.delete('/messages/clear', async (req, res) => {
 router.post('/categories', async (req, res) => {
   const { name, slug } = req.body;
   try {
+    // Basic slug generation if not provided
     const finalSlug = slug || name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+    
     const category = await prisma.category.create({
       data: { name, slug: finalSlug }
     });
     res.json(category);
   } catch (error) {
-    console.warn('DB create category failed, simulating success');
+    // Check for unique constraint violation on slug
     if (error.code === 'P2002') {
         return res.status(400).json({ error: 'Category with this slug already exists' });
     }
-    res.json({ id: Date.now(), name, slug: slug || 'demo-slug', message: 'Category added (Demo Mode)' });
+    res.status(500).json({ error: 'Failed to create category' });
   }
 });
 
@@ -322,8 +308,7 @@ router.delete('/categories/:id', async (req, res) => {
     await prisma.category.delete({ where: { id } });
     res.json({ message: 'Category deleted' });
   } catch (error) {
-    console.warn(`DB delete category ${id} failed, simulating success`);
-    res.json({ message: 'Category deleted (Demo Mode)' });
+    res.status(500).json({ error: 'Failed to delete category' });
   }
 });
 
@@ -334,56 +319,17 @@ router.put('/categories/:id', async (req, res) => {
   
   try {
      const finalSlug = slug || name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
+     
      const category = await prisma.category.update({
         where: { id },
         data: { name, slug: finalSlug }
      });
      res.json(category);
   } catch (error) {
-     console.warn(`DB update category ${id} failed, simulating success`);
      if (error.code === 'P2002') {
         return res.status(400).json({ error: 'Slug already exists' });
      }
-     res.json({ id, name, slug: slug || 'demo-slug', message: 'Category updated (Demo Mode)' });
-  }
-});
-
-// --- Order Management ---
-
-// Get all orders
-router.get('/orders', async (req, res) => {
-  try {
-    const orders = await prisma.order.findMany({
-      include: { 
-        user: { select: { id: true, name: true, email: true } },
-        items: { include: { product: true } }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    res.json(orders);
-  } catch (error) {
-    console.warn('DB fetch orders failed, returning mock orders');
-    res.json([
-      { id: 'ORD-5501', total: 124.98, status: 'pending', createdAt: new Date(), user: { name: 'Alice Walker', email: 'alice@example.com' } },
-      { id: 'ORD-5502', total: 45.50, status: 'shipped', createdAt: new Date(Date.now() - 86400000), user: { name: 'Bob Smith', email: 'bob@example.com' } },
-      { id: 'ORD-5503', total: 210.00, status: 'delivered', createdAt: new Date(Date.now() - 172800000), user: { name: 'Charlie Day', email: 'charlie@example.com' } }
-    ]);
-  }
-});
-
-// Update order status
-router.put('/orders/:id', async (req, res) => {
-  const { id } = req.params;
-  const { status } = req.body;
-  try {
-    const order = await prisma.order.update({
-      where: { id },
-      data: { status }
-    });
-    res.json(order);
-  } catch (error) {
-    console.warn(`DB update order ${id} failed, simulating success`);
-    res.json({ id, status, message: 'Order status updated (Demo Mode)' });
+     res.status(500).json({ error: 'Failed to update category' });
   }
 });
 
