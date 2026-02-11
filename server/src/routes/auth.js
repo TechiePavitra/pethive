@@ -124,8 +124,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Only return 401 if it's not a demo user AND not a DB user
-    const hint = demoEmail === 'admin@example.com' ? ' Hint: admin@example.com / PethiveAdmin2026!' : '';
-    res.status(401).json({ error: `Invalid credentials.${hint}` });
+    res.status(401).json({ error: 'Invalid credentials' });
 
   } catch (error) {
     console.error('Login error (final catch):', error);
