@@ -56,16 +56,22 @@ const mockProducts = [
 // Get all categories
 router.get('/categories', async (req, res, next) => {
   try {
+    console.log('Fetching categories from database...');
     const categories = await prisma.category.findMany({
       orderBy: { name: 'asc' }
     });
+    console.log(`Found ${categories.length} categories in database`);
     // Fallback to mock data if database is empty
-    res.json(categories.length > 0 ? categories : mockCategories);
+    if (categories.length > 0) {
+      return res.json(categories);
+    }
   } catch (error) {
-    console.error('Category fetch error:', error.message);
-    // Return mock data if database connection fails
-    res.json(mockCategories);
+    console.error('Category fetch error - using mock data:', error.message);
   }
+  
+  // Return mock data as fallback
+  console.log('Returning mock categories');
+  res.json(mockCategories);
 });
 
 // Get all products with filters and pagination
@@ -88,8 +94,10 @@ router.get('/products', async (req, res, next) => {
   }
 
   try {
+    console.log('Fetching products with query:', { category, search, page, limit });
     // Get total count for pagination
     const total = await prisma.product.count({ where });
+    console.log(`Total products in database: ${total}`);
     
     // Get products
     const products = await prisma.product.findMany({
@@ -100,8 +108,11 @@ router.get('/products', async (req, res, next) => {
       take: parseInt(limit)
     });
     
+    console.log(`Retrieved ${products.length} products from database`);
+    
     // Fallback to mock data if database is empty
     if (products.length === 0 && total === 0) {
+      console.log('Database empty - returning mock products');
       return res.json({
         products: mockProducts,
         pagination: {
@@ -113,7 +124,7 @@ router.get('/products', async (req, res, next) => {
       });
     }
     
-    res.json({
+    return res.json({
       products,
       pagination: {
         total,
@@ -123,9 +134,9 @@ router.get('/products', async (req, res, next) => {
       }
     });
   } catch (error) {
-    console.error('Product fetch error:', error.message);
+    console.error('Product fetch error - using mock data:', error.message, error.stack);
     // Return mock data if database connection fails
-    res.json({
+    return res.json({
       products: mockProducts,
       pagination: {
         total: mockProducts.length,
