@@ -26,5 +26,8 @@
     "dev": "concurrently \"cd server && npm run dev\" \"cd client && npm run dev\"",
     "build": "cd server && npm install && npx prisma generate && cd ../client && npm run build",
     "vercel-build": "cd server && npm install && npx prisma generate && cd ../client && npm run build"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.2"
   }
 }
